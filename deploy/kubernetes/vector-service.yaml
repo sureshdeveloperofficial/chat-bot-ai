@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vector-storage-pvc
+  namespace: chatbot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-service
+  namespace: chatbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-service
+  template:
+    metadata:
+      labels:
+        app: vector-service
+    spec:
+      containers:
+      - name: vector-service
+        image: chatbot/vector-service:latest
+        ports:
+        - containerPort: 8004
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: OPENAI_API_KEY
+        - name: STORAGE_PATH
+          value: "/app/vector_storage"
+        volumeMounts:
+        - name: vector-storage
+          mountPath: /app/vector_storage
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: vector-storage
+        persistentVolumeClaim:
+          claimName: vector-storage-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-service
+  namespace: chatbot
+spec:
+  selector:
+    app: vector-service
+  ports:
+  - port: 8004
+    targetPort: 8004

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: chatbot
+data:
+  DATABASE_URL: "postgresql://user:password@postgres-service:5432/chatbot_db"
+  REDIS_URL: "redis://redis-service:6379"
+  AUTH_SERVICE_URL: "http://auth-service:8001"
+  CHAT_SERVICE_URL: "http://chat-service:8002"
+  USER_SERVICE_URL: "http://user-service:8003"
+  VECTOR_SERVICE_URL: "http://vector-service:8004"
+  GATEWAY_URL: "http://gateway-service:8000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: chatbot
+type: Opaque
+data:
+  OPENAI_API_KEY: eW91ci1vcGVuYWktYXBpLWtleS1oZXJl  # base64 encoded "your-openai-api-key-here"
+  SECRET_KEY: eW91ci1zdXBlci1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9u  # base64 encoded "your-super-secret-key-change-in-production"
